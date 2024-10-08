@@ -158,8 +158,8 @@ import {
   createConfirmAppointment,
   createDisplaySelectionButtons,
   createFindAvailableSlots,
+  createResource,
 } from './lib/tools'
-import { createResource } from './lib/tools/resources'
 import { registry } from './setup-registry'
 
 const model = environment.MODEL
