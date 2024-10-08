@@ -1,9 +1,11 @@
 # Project information
-site_name: "Plantilla de talleres"
+site_name: "Workshop: Create Chatbots with Telegram and AI"
 site_url: "https://github.com/aulasoftwarelibre/plantilla-talleres"
 site_author: "Aula de Software Libre <aulasoftwarelibre@uco.es>"
 site_description: >-
-  Plantilla para crear documentación de los talleres del aula
+  How to create your Chatbots with Telegram and AI Models,
+  using free and commercial LLMs with Vercel AI SDK.
+
 
 # Repository information
 repo_name: "aulasoftwarelibre/plantilla-talleres"
@@ -26,7 +28,7 @@ theme:
   icon:
     logo: material/git
   name: "material"
-  language: "es"
+  language: "en"
   palette:
     # Palette toggle for automatic mode
     - media: "(prefers-color-scheme)"
@@ -117,6 +119,8 @@ markdown_extensions:
 
 # Page tree
 nav:
-  - Inicio: index.md
-  - Otra seccion:
-    - Otra pagina: other.md
+  - Index: index.md
+  - Create a bot: create-bot.md
+  - Cloning the template: cloning.md
+  - Create the model register: register.md
+  
