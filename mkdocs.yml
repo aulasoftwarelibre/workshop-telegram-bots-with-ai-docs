@@ -1,6 +1,6 @@
 # Project information
 site_name: "Workshop: Create Chatbots with Telegram and AI"
-site_url: "https://github.com/aulasoftwarelibre/plantilla-talleres"
+site_url: "https://aulasoftwarelibre.github.io/workshop-telegram-bots-with-ai-docs/"
 site_author: "Aula de Software Libre <aulasoftwarelibre@uco.es>"
 site_description: >-
   How to create your Chatbots with Telegram and AI Models,
@@ -8,8 +8,8 @@ site_description: >-
 
 
 # Repository information
-repo_name: "aulasoftwarelibre/plantilla-talleres"
-repo_url: "https://github.com/aulasoftwarelibre/plantilla-talleres"
+repo_name: "aulasoftwarelibre/workshop-telegram-bots-with-ai-docs"
+repo_url: "https://github.com/aulasoftwarelibre/workshop-telegram-bots-with-ai-docs"
 
 # License
 copyright: Copyleft - CC BY-NC 4.0 - Aula de Software Libre
@@ -123,4 +123,5 @@ nav:
   - Create a bot: create-bot.md
   - Cloning the template: cloning.md
   - Create the model register: register.md
+  - Full code: full-code.md
   
