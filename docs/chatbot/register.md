@@ -2,6 +2,10 @@
 
 In this section, you will learn how to create registries for AI models in Vercel SDK. This setup allows you to register multiple AI providers and language models to be used in your project.
 
+!!! info
+
+    This step is usually not necessary, if you are only going to use one AI provider you can use it directly instead of creating a record.
+
 ## Setting up the Registry
 
 The following steps will guide you on how to register AI providers such as OpenAI and Ollama using the Vercel SDK.
@@ -59,6 +63,13 @@ The `registry` now holds both **Ollama** and **OpenAI** providers, each register
 You can now use the `registry` in your project to manage and switch between AI providers and models as needed.
 
 This completes the setup for registering AI providers in the Vercel SDK. You can expand this registry by adding more providers or models as required by your application.
+
+Now, to use one or the other, edit the .env file and configure which provider and which model you want to use. Remember that if you want to use OpenAI you will have to have a Token API.
+
+!!! warning
+
+    It is possible that the free models do not work as well as the proprietary ones in the examples that use tools. Especially if they are small, since it is normal that in local we cannot run models with more than 12B of parameters. After the publication of this tutorial new and better open models may appear, try other options to see if they work better. If not you can always try a commercial model.
+
 
 ## Full code
 

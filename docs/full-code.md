@@ -1,5 +1,9 @@
 # Full code
 
+!!! failure "Example outdated"
+
+    This code still works but it is not updated to the rest of the tutorial.
+
 ## Registry
 
 ```ts title="src/setup-registry.ts"

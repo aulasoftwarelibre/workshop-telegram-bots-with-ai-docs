@@ -120,8 +120,18 @@ markdown_extensions:
 # Page tree
 nav:
   - Index: index.md
-  - Create a bot: create-bot.md
-  - Cloning the template: cloning.md
-  - Create the model register: register.md
+  - Our first bot:
+    - Create a bot: bot/create-bot.md
+    - Cloning the template: bot/cloning.md
+    - Running the bot: bot/running.md
+  - Using a model:
+    - Installing Ollama: chatbot/ollama.md
+    - Create the model register: chatbot/register.md
+    - Running a basic chatbot: chatbot/basic.md
+    - Adding Memory : chatbot/memory.md
+  - Data Augmentation:
+    - Data Augmentation: rag/index.md
+  - Agents:
+    - Agents: agents/index.md
   - Full code: full-code.md
   
