@@ -134,7 +134,6 @@ nav:
     - Retrieval-Augmented Generation: rag/rag.md
     - Dynamic Data Augmentation with Tools: rag/tools.md
   - Agents:
-    - Agents: agents/basic.md
-  - Full code: full-code.md
-  
-
+    - Understanding Agents: agents/basic.md
+    - Displaying Available Time Slots: agents/using-tools.md
+    - Handling User Selection: agents/using-tools-2.md

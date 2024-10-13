@@ -1,13 +1,5 @@
 # How to create your Chatbots with Telegram and AI Models
 
-!!! warning "Work in progress"
-
-    The next sections are not finished yet:
-
-    - Data Augmentation
-    - Agents
-        
-
 <figure markdown>
   ![Aula Software Libre de la UCO](images/logo-cuadrado.svg#only-light)
   ![Aula Software Libre de la UCO](images/logo-cuadrado-invertido.svg#only-dark)
