@@ -24,10 +24,7 @@ export async function start(context: CommandContext<Context>): Promise<void> {
 This is where the echo functionality comes into play. The bot listens for incoming text messages from users and, upon receiving a message, responds by sending back the same message. This demonstrates the basic capability of the bot to handle and reply to user input.
 
 ```ts title="src/lib/handlers/on-message.ts"
-import { generateText } from 'ai'
 import { Composer } from 'grammy'
-
-import { environment } from '../environment.mjs'
 
 export const onMessage = new Composer()
 
@@ -49,13 +46,11 @@ Additionally, we ensure the bot shuts down properly when the process receives te
 ```ts title="src/main.ts"
 import process from 'node:process'
 
-import { environment } from './lib/environment.mjs'
 import { Bot } from 'grammy'
 
 import { start } from './lib/commands/start'
 import { environment } from './lib/environment.mjs'
 import { onMessage } from './lib/handlers/on-message'
-
 
 async function main(): Promise<void> {
   const bot = new Bot(environment.BOT_TOKEN)
@@ -96,6 +91,9 @@ This final section provides a step-by-step guide on how to set up and run the bo
     ```bash
     pnpm install
     ```
+
+    !!! info
+        This step was done automatically if you are using our devcontainer.
 
 4. **Run the bot**:  
    Start the bot in development mode:

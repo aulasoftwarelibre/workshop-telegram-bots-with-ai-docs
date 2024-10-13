@@ -11,14 +11,23 @@ We will create a table named `messages` to store the conversations.
 To create this table using **Drizzle ORM**, we can follow a similar structure to other tables created in the project. Below is a basic template:
 
 ```ts title="src/lib/db/schema/messages.ts"
-import { bigint, pgTable, serial, text, varchar, timestamp } from 'drizzle-orm/pg-core'
+import {
+  bigint,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  varchar,
+} from 'drizzle-orm/pg-core'
 
 export const messages = pgTable('messages', {
   chatId: bigint({ mode: 'number' }).notNull(),
   content: text('content').notNull(),
   messageId: serial('message_id').primaryKey(),
   occurredOn: timestamp('occurred_on').defaultNow().notNull(),
-  role: varchar('role', { length: 50 }).$type<'user' | 'assistant' | 'system' | 'tool'>().notNull(),
+  role: varchar('role', { length: 50 })
+    .$type<'user' | 'assistant' | 'system' | 'tool'>()
+    .notNull(),
 })
 ```
 
@@ -99,6 +108,8 @@ export class ConversationRepository {
     await database.delete(messages).where(eq(messages.chatId, chatId))
   }
 }
+
+export const conversationRepository = new ConversationRepository()
 ```
 
 
@@ -117,7 +128,7 @@ import { conversationRepository } from '../repositories/conversation'
 export async function start(context: CommandContext<Context>): Promise<void> {
   const chatId = context.chat.id
   // Clear the conversation
-  await conversationRepository.clearConversation(chatId)
+  await conversationRepository.clear(chatId)
 
   const content = 'Welcome, how can I help you?'
   // Store the assistant's welcome message

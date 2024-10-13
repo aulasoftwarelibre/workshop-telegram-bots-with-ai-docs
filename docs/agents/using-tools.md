@@ -72,7 +72,7 @@ import { registry } from '../ai/setup-registry'
 import { environment } from '../environment.mjs'
 import { conversationRepository } from '../repositories/conversation'
 import { buildDisplaySelectionButtons } from '../tools/display-selection-buttons'
-import { getFreeAppointments } from '../tools/get-free-appointments'
+import { buildGetFreeAppointments } from '../tools/get-free-appointments'
 
 export const onMessage = new Composer()
 
@@ -109,7 +109,7 @@ onMessage.on('message:text', async (context) => {
     system: PROMPT,
     tools: {
       displaySelectionButtons: buildDisplaySelectionButtons(context),
-      getFreeAppointments,
+      getFreeAppointments: buildGetFreeAppointments(),
     },
   })
 
@@ -124,3 +124,5 @@ onMessage.on('message:text', async (context) => {
   await context.reply(text)
 })
 ```
+
+Now try to ask for an appointment and you will see how both tools are called in a row.

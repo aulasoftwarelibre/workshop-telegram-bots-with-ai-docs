@@ -12,7 +12,14 @@ This step involves defining the database schema for storing appointments, includ
 
 
 ```ts title="src/lib/db/schema/appointments.ts"
-import { bigint, date, pgTable, serial, time, uniqueIndex } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  date,
+  pgTable,
+  serial,
+  time,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core'
 
 export const appointments = pgTable(
   'appointments',
@@ -42,7 +49,7 @@ The repository class contains methods for interacting with the database. It hand
 
 This logic ensures that the chatbot can always return relevant appointment data, even if none have been pre-created for that day. The dynamic nature of this repository is key to making the system respond to real-world conditions.
 
-```ts
+```ts title="src/lib/repositories/appointments.ts"
 import { eq } from 'drizzle-orm/expressions'
 
 import { db as database } from '../db/index'
@@ -100,6 +107,44 @@ export const appointmentsRepository = new AppointmentRepository()
 
 Here, we define a tool (getFreeAppointments) that fetches free appointments for the next day using the repository. The tool returns a markdown list of available time slots, which can be directly integrated into the chatbot’s responses. This tool encapsulates the repository logic, ensuring that the chatbot can retrieve dynamic appointment data without direct interaction with the database.
 
+```ts title="src/lib/tools/get-free-appointments.ts"
+import { type CoreTool, tool } from 'ai'
+import { format } from 'date-fns'
+import { z } from 'zod'
+
+import { appointmentsRepository } from '../repositories/appointments'
+import { tomorrow } from '../utils'
+
+export const buildGetFreeAppointments = (): CoreTool =>
+  tool({
+    description:
+      'Use this tool to search for available appointment times for tomorrow. Returns the response',
+    execute: async () => {
+      console.log(`Called getFreeAppointments tool`)
+
+      const freeAppointments =
+        await appointmentsRepository.getFreeAppointmentsForDay(tomorrow())
+
+      if (freeAppointments.length === 0) {
+        return `Sorry, there are no available appointments for tomorrow.`
+      }
+
+      const availableSlots = freeAppointments
+        .map(
+          (app) =>
+            `- ${format(new Date(`1970-01-01T${app.timeSlot}`), 'HH:mm')}`,
+        )
+        .join('\n')
+
+      return `Available appointments are:\n${availableSlots}.`
+    },
+    parameters: z.object({}),
+  })
+```
+
+### Step 4: Adding the tool
+
+Finally we incorporate the tool to the context of our bot.
 
 ```ts title="src/lib/handlers/on-message.ts"
 import { generateText } from 'ai'
@@ -108,7 +153,7 @@ import { Composer } from 'grammy'
 import { registry } from '../ai/setup-registry'
 import { environment } from '../environment.mjs'
 import { conversationRepository } from '../repositories/conversation'
-import { getFreeAppointments } from '../tools/get-free-appointments'
+import { buildGetFreeAppointments } from '../tools/get-free-appointments'
 
 export const onMessage = new Composer()
 
@@ -138,7 +183,7 @@ onMessage.on('message:text', async (context) => {
     model: registry.languageModel(environment.MODEL),
     system: PROMPT,
     tools: {
-      getFreeAppointments,
+      getFreeAppointments: buildGetFreeAppointments(),
     },
   })
 

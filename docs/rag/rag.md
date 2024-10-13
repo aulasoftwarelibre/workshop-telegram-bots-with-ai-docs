@@ -44,39 +44,43 @@ export async function learn(context: CommandContext<Context>): Promise<void> {
 ## Creating the `/ask` command
 
 ```ts title="src/lib/commands/ask.ts"
-bot.command("ask", async (context) => {
-  const userQuery = context.match;
+import { generateText } from 'ai'
+import type { CommandContext, Context } from 'grammy'
+
+import { findRelevantContent } from '../ai/embeddings'
+import { registry } from '../ai/setup-registry'
+import { environment } from '../environment.mjs'
+
+export async function ask(context: CommandContext<Context>): Promise<void> {
+  const userQuery = context.match
 
   // Find relevant content using embeddings
-  const relevantContent = await findRelevantContent(userQuery);
+  const relevantContent = await findRelevantContent(userQuery)
 
   if (relevantContent.length === 0) {
-    await context.reply("Sorry, I couldn't find any relevant information.");
-    return;
+    await context.reply("Sorry, I couldn't find any relevant information.")
+    return
   }
 
   // Generate the response with the RAG-enhanced prompt
   const { text } = await generateText({
-    messages: [{ content: userQuery, role: "user" }],
+    messages: [{ content: userQuery, role: 'user' }],
     model: registry.languageModel(environment.MODEL),
     // Combine the relevant content into the system prompt
     system: `
-        You are a chatbot designed to help users book hair salon appointments.
-        Here is some additional information relevant to your query:
-
-        ${relevantContent.map((content) => content.name).join("\n")}
-        
-        Answer the user's question based on this information.
-        If a user asks for information outside of these details, 
-        please respond with: "I'm sorry, but I cannot assist with that.
-        For more information, please call us at (555) 456-7890 or email
-        us at info@hairsalon.com."
+      You are a chatbot designed to help users book hair salon appointments.
+      Here is some additional information relevant to your query:
+  
+      ${relevantContent.map((content) => content.name).join('\n')}
+      
+      Answer the user's question based on this information.
+      If a user asks for information outside of these details, please respond with: "I'm sorry, but I cannot assist with that. For more information, please call us at (555) 456-7890 or email us at info@hairsalon.com."
     `,
-  });
+  })
 
   // Reply with the generated text
-  await context.reply(text);
-});
+  await context.reply(text)
+}
 ```
 
 
@@ -129,3 +133,20 @@ main().catch((error) => console.error(error))
     The generateText method now includes the additional content in the system prompt. This augments the bot’s ability to respond in a contextually aware manner by incorporating specific information from the retrieved data.
 
 With RAG, our bot can learn new information dynamically and retrieve relevant content to enhance its responses. By leveraging embeddings and prompt injection, the bot becomes more capable of answering user questions accurately. This setup demonstrates how RAG can be applied to improve interactions, making the bot more flexible and intelligent while still being grounded in specific data sources.
+
+
+!!! exercise
+
+    Add the information we had in the prompt:
+
+	1.	`/learn Our salon offers a haircut service for $25.`
+	2.	`/learn Our salon provides hair color services for $50.`
+	3.	`/learn We also offer a manicure service for $15.`
+	4.	`/learn Our opening hours are Monday to Saturday from 9 AM to 7 PM.`
+	5.	`/learn Our salon is closed on Sundays.`
+
+    And them does some questions:
+
+    1. `/ask What are your opening hours?`
+    2. `/ask How much is a haircut?`
+    3. `/ask Say my name`

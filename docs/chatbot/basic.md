@@ -41,6 +41,9 @@ At this stage, the bot can respond intelligently using AI but lacks conversation
 
 ## Full code
 
+!!! example
+
+    Update the next file to add the integration with the Vercel SDK AI
 
 ```ts title="src/lib/handlers/on-message.ts"
 import { generateText } from 'ai'
