@@ -73,7 +73,7 @@ Now, to use one or the other, edit the .env file and configure which provider an
 
 ## Full code
 
-```ts title="src/setup-registry.ts"
+```ts title="src/lib/ai/setup-registry.ts"
 import { openai as originalOpenAI } from '@ai-sdk/openai'
 import {
   experimental_createProviderRegistry as createProviderRegistry,

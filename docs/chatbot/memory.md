@@ -106,67 +106,66 @@ export class ConversationRepository {
 
 In this step, we enhance the chatbot's functionality by adding memory capabilities, allowing it to remember past interactions with users. This enables the bot to provide a more personalized experience and improve its responses based on previous messages.
 
-By incorporating memory, the bot becomes more capable of engaging in meaningful dialogues, improving user satisfaction and the overall chat experience.
 
-```ts
-import process from 'node:process'
+First we are going to reset the bot memory each time the `/start` command is executed, and add the welcome message.
 
-import { generateText } from 'ai'
-import { Bot } from 'grammy'
+```ts title="src/lib/commands/start.ts"
+import type { CommandContext, Context } from 'grammy'
 
-import { environment } from './lib/environment.mjs'
-import { ConversationRepository } from './lib/repositories/conversation'
-import { registry } from './setup-registry'
+import { conversationRepository } from '../repositories/conversation'
 
-const conversationRepository = new ConversationRepository()
+export async function start(context: CommandContext<Context>): Promise<void> {
+  const chatId = context.chat.id
+  // Clear the conversation
+  await conversationRepository.clearConversation(chatId)
 
-async function main(): Promise<void> {
-  const bot = new Bot(environment.BOT_TOKEN)
+  const content = 'Welcome, how can I help you?'
+  // Store the assistant's welcome message
+  await conversationRepository.addMessage(chatId, 'assistant', content)
 
-  bot.command('start', async (context) => {
-    const chatId = context.chat.id
-    // Clear the conversation
-    await conversationRepository.clearConversation(chatId)
-
-    const content = 'Welcome, how can I help you?'
-    // Store the assistant's welcome message
-    await conversationRepository.addMessage(chatId, 'assistant', content)
-
-    await context.reply(content)
-  })
-
-  bot.on('message:text', async (context) => {
-    const userMessage = context.message.text
-    const chatId = context.chat.id
-
-    // Store the user's message
-    await conversationRepository.addMessage(chatId, 'user', userMessage)
-
-    // Retrieve past conversation history
-    const messages = await conversationRepository.get(chatId)
-
-    // Generate the assistant's response using the conversation history
-    const { text } = await generateText({
-      messages,
-      model: registry.languageModel(environment.MODEL),
-      system:
-        'You are a chatbot designed to help users book hair salon appointments for the next day.',
-    })
-
-    // Store the assistant's response
-    await conversationRepository.addMessage(chatId, 'assistant', text)
-
-    // Reply with the generated text
-    await context.reply(text)
-  })
-
-  // Enable graceful stop
-  process.once('SIGINT', () => bot.stop())
-  process.once('SIGTERM', () => bot.stop())
-  process.once('SIGUSR2', () => bot.stop())
-
-  await bot.start()
+  await context.reply(content)
 }
-
-main().catch((error) => console.error(error))
 ```
+
+Now, we can add the user's messages and the bot's replies:
+
+```ts title="src/lib/handlers/on-message.ts"
+import { generateText } from 'ai'
+import { Composer } from 'grammy'
+
+import { registry } from '../ai/setup-registry'
+import { environment } from '../environment.mjs'
+import { conversationRepository } from '../repositories/conversation'
+
+export const onMessage = new Composer()
+
+const PROMPT = `
+You are a chatbot designed to help users book hair salon appointments for the next day.
+`
+
+onMessage.on('message:text', async (context) => {
+  const userMessage = context.message.text
+  const chatId = context.chat.id
+
+  // Store the user's message
+  await conversationRepository.addMessage(chatId, 'user', userMessage)
+
+  // Retrieve past conversation history
+  const messages = await conversationRepository.get(chatId)
+
+  // Generate the assistant's response using the conversation history
+  const { text } = await generateText({
+    messages,
+    model: registry.languageModel(environment.MODEL),
+    system: PROMPT,
+  })
+
+  // Store the assistant's response
+  await conversationRepository.addMessage(chatId, 'assistant', text)
+
+  // Reply with the generated text
+  await context.reply(text)
+})
+```
+
+By incorporating memory, the bot becomes more capable of engaging in meaningful dialogues, improving user satisfaction and the overall chat experience.

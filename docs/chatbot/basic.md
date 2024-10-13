@@ -1,10 +1,10 @@
 # Basic Chatbot with AI
 
-In this chapter, we will explore how to integrate an AI model into a basic chatbot.
+In this chapter, we will integrate AI-powered responses into a basic chatbot. The chatbot uses an AI model to generate replies based on user input.
 
 ## AI-Powered Responses
 
-The main functionality of this chatbot is to use an AI model to generate responses based on user input. This is done using the `generateText` function, which takes a prompt (the user's message) and a system instruction to guide the AI's behavior.
+The chatbot relies on the `generateText` from Vercel SDK AI function to produce intelligent responses. This function takes two key inputs: the user’s message (prompt) and system instructions that define the AI’s role.
 
 ### Understanding the Code
 
@@ -37,49 +37,35 @@ const { text } = await generateText({
 3. The system prompt ensures that the AI model knows it is a chatbot for booking appointments, guiding it to provide relevant responses.
 4. The AI model processes the input and generates a response, which is then sent back to the user.
 
-Now our bot answers using AI, but it has no memory and is not able to continue a conversation.
+At this stage, the bot can respond intelligently using AI but lacks conversation memory to handle ongoing interactions.
 
 ## Full code
 
 
-```ts title="src/main.ts"
-import process from 'node:process'
-
+```ts title="src/lib/handlers/on-message.ts"
 import { generateText } from 'ai'
-import { Bot } from 'grammy'
+import { Composer } from 'grammy'
 
-import { environment } from './lib/environment.mjs'
-import { registry } from './setup-registry'
+import { registry } from '../ai/setup-registry'
+import { environment } from '../environment.mjs'
 
-async function main(): Promise<void> {
-  const bot = new Bot(environment.BOT_TOKEN)
+export const onMessage = new Composer()
 
-  bot.command('start', async (context) => {
-    const content = 'Welcome, how can I help you?'
+const PROMPT = `
+You are a chatbot designed to help users book hair salon appointments for the next day.
+`
 
-    await context.reply(content)
+onMessage.on('message:text', async (context) => {
+  const userMessage = context.message.text
+
+  // Generate the assistant's response using the conversation history
+  const { text } = await generateText({
+    model: registry.languageModel(environment.MODEL),
+    prompt: userMessage,
+    system: PROMPT,
   })
 
-  bot.on('message:text', async (context) => {
-    const userMessage = context.message.text
-
-    const { text } = await generateText({
-      model: registry.languageModel(environment.MODEL),
-      prompt: userMessage,
-      system:
-        'You are a chatbot designed to help users book hair salon appointments for the next day.',
-    })
-
-    await context.reply(text)
-  })
-
-  // Enable graceful stop
-  process.once('SIGINT', () => bot.stop())
-  process.once('SIGTERM', () => bot.stop())
-  process.once('SIGUSR2', () => bot.stop())
-
-  await bot.start()
-}
-
-main().catch((error) => console.error(error))
+  // Reply with the generated text
+  await context.reply(text)
+})
 ```

@@ -6,68 +6,78 @@ In this section, we will go through how to run a basic echo bot using the Grammy
 
 The following code sets up a simple bot that echoes back any text message it receives.
 
-### Step 1: Import Required Modules
+### Step 1: Add a command
 
-We start by importing the necessary modules. `dotenv` is used to load environment variables, and `Bot` comes from the **grammy** library, which is used to interact with Telegram bots:
-    ```ts
-    import process from 'node:process'
-    import { Bot } from 'grammy'
+The first step involves creating a simple `/start` command. This command responds with a welcome message to introduce the bot and let users know it’s ready to help. It’s a good practice to include a starting point like this for bots to guide the user experience, especially for first-time users.
 
-    import { environment } from './lib/environment.mjs'
-    ```
+```ts title="src/lib/commands/start.ts"
+import type { CommandContext, Context } from 'grammy'
 
-### Step 2: Initialize the Bot
+export async function start(context: CommandContext<Context>): Promise<void> {
+  const content = 'Welcome, how can I help you?'
+  await context.reply(content)
+}
+```
 
-In the `main` function, we initialize the bot using the token from the environment variable `BOT_TOKEN`. This token is essential for interacting with the Telegram API:
-    ```ts
-    async function main(): Promise<void> {
-      const bot = new Bot(environment.BOT_TOKEN)
-    ```
+### Step 2: Handle Messages
 
-### Step 3: Add Commands
+This is where the echo functionality comes into play. The bot listens for incoming text messages from users and, upon receiving a message, responds by sending back the same message. This demonstrates the basic capability of the bot to handle and reply to user input.
 
-The bot is programmed to respond to a `/start` command with a welcome message. This is useful for onboarding users or providing initial instructions:
-    ```ts
-    bot.command('start', async (context) => {
-      const content = 'Welcome, how can I help you?'
-      await context.reply(content)
-    })
-    ```
+```ts title="src/lib/handlers/on-message.ts"
+import { generateText } from 'ai'
+import { Composer } from 'grammy'
 
-### Step 4: Handle Messages
+import { environment } from '../environment.mjs'
 
-The core functionality of this echo bot is to listen for text messages. Whenever the bot receives a text message, it sends the same message back to the user:
-    ```ts
-    bot.on('message:text', async (context) => {
-      const userMessage = context.message.text
-      await context.reply(userMessage)
-    })
-    ```
+export const onMessage = new Composer()
 
-### Step 5: Graceful Shutdown
+onMessage.on('message:text', async (context) => {
+  const userMessage = context.message.text
+  await context.reply(userMessage)
+})
+```
 
-To ensure that the bot stops gracefully when the application is terminated (for example, by `SIGINT` or `SIGTERM`), we add the following event listeners:
-    ```ts
-    process.once('SIGINT', () => bot.stop())
-    process.once('SIGTERM', () => bot.stop())
-    process.once('SIGUSR2', () => bot.stop())
-    ```
+### Step 3: Construct the bot
 
-### Step 6: Start the Bot
+This section walks through setting up the core bot functionality. First, we initialize the bot using the token from environment variables, which is required for Telegram to authenticate and interact with your bot.
 
-Finally, the bot is started with the `bot.start()` method:
-    ```ts
-    await bot.start()
-    }
+Next, we attach the `/start` command and the echo message handler (`onMessage`). The bot listens for incoming text and command events and processes them accordingly.
 
-    main().catch((error) => console.error(error))
-    ```
+Additionally, we ensure the bot shuts down properly when the process receives termination signals, such as SIGINT or SIGTERM, making the bot more robust and production-ready.
 
-This code initializes the bot, listens for text messages, and echoes the received message back to the user. The bot will stop safely when the application receives termination signals.
+
+```ts title="src/main.ts"
+import process from 'node:process'
+
+import { environment } from './lib/environment.mjs'
+import { Bot } from 'grammy'
+
+import { start } from './lib/commands/start'
+import { environment } from './lib/environment.mjs'
+import { onMessage } from './lib/handlers/on-message'
+
+
+async function main(): Promise<void> {
+  const bot = new Bot(environment.BOT_TOKEN)
+
+  bot.command('start', start)
+
+  bot.use(onMessage)
+
+  // Enable graceful stop
+  process.once('SIGINT', () => bot.stop())
+  process.once('SIGTERM', () => bot.stop())
+  process.once('SIGUSR2', () => bot.stop())
+
+  await bot.start()
+}
+
+main().catch((error) => console.error(error))
+```
 
 ## Running the Bot
 
-To run the bot, follow these steps:
+This final section provides a step-by-step guide on how to set up and run the bot. It includes copying environment variables, updating the configuration with the correct Telegram bot token, installing the required dependencies, and finally running the bot in development mode.
 
 1. **Copy the environment configuration**:  
    Rename the provided `.env.example` file to `.env` to set up your environment variables. You can do this using the following command:
@@ -94,39 +104,3 @@ To run the bot, follow these steps:
     ```
 
 After following these steps, your bot will be running, and you can start chatting with it. The bot will respond to the `/start` command with a welcome message and echo any text message you send.
-
-## Full code
-
-```ts title="src/main.ts"
-import process from 'node:process'
-
-import { environment } from './lib/environment.mjs'
-import { Bot } from 'grammy'
-
-dotenv.config()
-
-async function main(): Promise<void> {
-  const bot = new Bot(environment.BOT_TOKEN)
-
-  bot.command('start', async (context) => {
-    const content = 'Welcome, how can I help you?'
-
-    await context.reply(content)
-  })
-
-  bot.on('message:text', async (context) => {
-    const userMessage = context.message.text
-
-    await context.reply(userMessage)
-  })
-
-  // Enable graceful stop
-  process.once('SIGINT', () => bot.stop())
-  process.once('SIGTERM', () => bot.stop())
-  process.once('SIGUSR2', () => bot.stop())
-
-  await bot.start()
-}
-
-main().catch((error) => console.error(error))
-```
