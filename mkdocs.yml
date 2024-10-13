@@ -119,7 +119,7 @@ markdown_extensions:
 
 # Page tree
 nav:
-  - Index: index.md
+  - Introduction: index.md
   - Our first bot:
     - Create a bot: bot/create-bot.md
     - Cloning the template: bot/cloning.md
@@ -129,9 +129,12 @@ nav:
     - Create the model register: chatbot/register.md
     - Running a basic chatbot: chatbot/basic.md
     - Adding Memory : chatbot/memory.md
-  - Data Augmentation:
-    - Data Augmentation: rag/index.md
+  - Enhanced Context with Data:
+    - Basic Data Augmentation: rag/basic.md
+    - Retrieval-Augmented Generation: rag/rag.md
+    - Dynamic Data Augmentation with Tools: rag/tools.md
   - Agents:
-    - Agents: agents/index.md
+    - Agents: agents/basic.md
   - Full code: full-code.md
   
+
