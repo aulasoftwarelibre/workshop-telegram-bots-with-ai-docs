@@ -171,13 +171,16 @@ onMessage.on('message:text', async (context) => {
   const chatId = context.chat.id
 
   // Store the user's message
-  await conversationRepository.addMessage(chatId, 'user', userMessage)
+  await conversationRepository.addMessage(chatId, {
+    content: userMessage,
+    role: 'user',
+  })
 
   // Retrieve past conversation history
   const messages = await conversationRepository.get(chatId)
 
   // Generate the assistant's response using the conversation history
-  const { text } = await generateText({
+  const { responseMessages, text } = await generateText({
     maxSteps: 2,
     messages,
     model: registry.languageModel(environment.MODEL),
@@ -188,7 +191,9 @@ onMessage.on('message:text', async (context) => {
   })
 
   // Store the assistant's response
-  await conversationRepository.addMessage(chatId, 'assistant', text)
+  for await (const message of responseMessages) {
+    await conversationRepository.addMessage(chatId, message)
+  }
 
   // Reply with the generated text
   await context.reply(text)

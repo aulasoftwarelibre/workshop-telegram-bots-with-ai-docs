@@ -19,19 +19,20 @@ By combining these components, the chatbot provides a smooth and user-friendly b
 ### Create the tool to display buttons
 
 ```ts title="src/lib/tools/display-selection-buttons.ts"
-import { type CoreTool, tool } from "ai";
-import { type Context, InlineKeyboard } from "grammy";
-import { z } from "zod";
-
-import { conversationRepository } from "../repositories/conversation";
+import { type CoreTool, tool } from 'ai'
+import { type Context, InlineKeyboard } from 'grammy'
+import { z } from 'zod'
 
 export const buildDisplaySelectionButtons = (context: Context): CoreTool =>
   tool({
-    description: "Use this tool to ask to the user with the available time slots as buttons they can select from.",
+    description:
+      'Use this tool to ask to the user with the available time slots as buttons they can select from.',
     execute: async ({ options, question }) => {
-      console.log(`Called displaySelectionButtons tool with ${JSON.stringify({ options, question }, null, 2)}`);
+      console.log(
+        `Called displaySelectionButtons tool with ${JSON.stringify({ options, question }, null, 2)}`,
+      )
 
-      const buttonsRows = [];
+      const buttonsRows = []
       for (let index = 0; index < options.length; index += 2) {
         buttonsRows.push(
           options
@@ -40,26 +41,23 @@ export const buildDisplaySelectionButtons = (context: Context): CoreTool =>
               data: `slot-${option}`,
               label: option,
             }))
-            .map(({ data, label }) => InlineKeyboard.text(label, data))
-        );
+            .map(({ data, label }) => InlineKeyboard.text(label, data)),
+        )
       }
 
       await context.reply(question, {
         reply_markup: InlineKeyboard.from(buttonsRows),
-      });
+      })
 
-      const content = `${question}: ${options.join(", ")}`;
-
-      const chatId = context?.chat?.id as number;
-      await conversationRepository.addMessage(chatId, "assistant", content);
-
-      return null;
+      return null
     },
     parameters: z.object({
-      options: z.array(z.string()).describe("Array of time slots for the user to choose from"),
-      question: z.string().describe("The question to ask the user"),
+      options: z
+        .array(z.string())
+        .describe('Array of time slots for the user to choose from'),
+      question: z.string().describe('The question to ask the user'),
     }),
-  });
+  })
 ```
 
 ### Add the tool and update the prompt
@@ -96,13 +94,16 @@ onMessage.on('message:text', async (context) => {
   const chatId = context.chat.id
 
   // Store the user's message
-  await conversationRepository.addMessage(chatId, 'user', userMessage)
+  await conversationRepository.addMessage(chatId, {
+    content: userMessage,
+    role: 'user',
+  })
 
   // Retrieve past conversation history
   const messages = await conversationRepository.get(chatId)
 
   // Generate the assistant's response using the conversation history
-  const { text } = await generateText({
+  const { responseMessages, text } = await generateText({
     maxSteps: 2,
     messages,
     model: registry.languageModel(environment.MODEL),
@@ -113,12 +114,14 @@ onMessage.on('message:text', async (context) => {
     },
   })
 
+  // Store the assistant's response
+  for await (const message of responseMessages) {
+    await conversationRepository.addMessage(chatId, message)
+  }
+
   if (!text) {
     return
   }
-
-  // Store the assistant's response
-  await conversationRepository.addMessage(chatId, 'assistant', text)
 
   // Reply with the generated text
   await context.reply(text)

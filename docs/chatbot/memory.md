@@ -11,23 +11,13 @@ We will create a table named `messages` to store the conversations.
 To create this table using **Drizzle ORM**, we can follow a similar structure to other tables created in the project. Below is a basic template:
 
 ```ts title="src/lib/db/schema/messages.ts"
-import {
-  bigint,
-  pgTable,
-  serial,
-  text,
-  timestamp,
-  varchar,
-} from 'drizzle-orm/pg-core'
+import { bigint, jsonb, pgTable, serial, timestamp } from 'drizzle-orm/pg-core'
 
 export const messages = pgTable('messages', {
   chatId: bigint({ mode: 'number' }).notNull(),
-  content: text('content').notNull(),
+  content: jsonb('content').notNull(),
   messageId: serial('message_id').primaryKey(),
   occurredOn: timestamp('occurred_on').defaultNow().notNull(),
-  role: varchar('role', { length: 50 })
-    .$type<'user' | 'assistant' | 'system' | 'tool'>()
-    .notNull(),
 })
 ```
 
@@ -35,8 +25,7 @@ export const messages = pgTable('messages', {
 
 - **messageId**: Auto-incrementing primary key for each message.
 - **chatId**: This stores the unique identifier of the chat session.
-- **role**: Defines whether the message is from the "user" or the "bot".
-- **content**: The text content of the message.
+- **content**: Contains the structured JSON data of the message, typically formatted as a `CoreMessage` from the Vercel SDK.
 - **occurredOn**: Automatically set timestamp for when the message was created.
 
 !!! info
@@ -77,30 +66,18 @@ export class ConversationRepository {
     const result = await database
       .select({
         content: messages.content,
-        role: messages.role,
       })
       .from(messages)
       .where(eq(messages.chatId, chatId))
       .orderBy(asc(messages.occurredOn))
 
-    return result.map(
-      (row) =>
-        ({
-          content: row.content,
-          role: row.role,
-        }) as CoreMessage,
-    )
+    return result.map((row) => row.content as CoreMessage)
   }
 
-  async addMessage(
-    chatId: number,
-    role: CoreMessage['role'],
-    content: string,
-  ): Promise<void> {
+  async addMessage(chatId: number, content: CoreMessage): Promise<void> {
     await database.insert(messages).values({
       chatId,
       content,
-      role,
     })
   }
 
@@ -132,7 +109,10 @@ export async function start(context: CommandContext<Context>): Promise<void> {
 
   const content = 'Welcome, how can I help you?'
   // Store the assistant's welcome message
-  await conversationRepository.addMessage(chatId, 'assistant', content)
+  await conversationRepository.addMessage(chatId, {
+    content,
+    role: 'assistant',
+  })
 
   await context.reply(content)
 }
@@ -159,20 +139,25 @@ onMessage.on('message:text', async (context) => {
   const chatId = context.chat.id
 
   // Store the user's message
-  await conversationRepository.addMessage(chatId, 'user', userMessage)
+  await conversationRepository.addMessage(chatId, {
+    content: userMessage,
+    role: 'user',
+  })
 
   // Retrieve past conversation history
   const messages = await conversationRepository.get(chatId)
 
   // Generate the assistant's response using the conversation history
-  const { text } = await generateText({
+  const { responseMessages, text } = await generateText({
     messages,
     model: registry.languageModel(environment.MODEL),
     system: PROMPT,
   })
 
   // Store the assistant's response
-  await conversationRepository.addMessage(chatId, 'assistant', text)
+  for await (const message of responseMessages) {
+    await conversationRepository.addMessage(chatId, message)
+  }
 
   // Reply with the generated text
   await context.reply(text)

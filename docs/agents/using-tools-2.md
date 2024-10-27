@@ -114,15 +114,15 @@ The onAppointment listener is responsible for capturing the user’s button pres
 
 
 ```ts title="src/lib/handlers/on-appointment.ts"
-import { generateText } from "ai";
-import { Composer } from "grammy";
+import { generateText } from 'ai'
+import { Composer } from 'grammy'
 
-import { registry } from "../ai/setup-registry";
-import { environment } from "../environment.mjs";
-import { conversationRepository } from "../repositories/conversation";
-import { buildConfirmAppointment } from "../tools/confirm-appointment";
+import { registry } from '../ai/setup-registry'
+import { environment } from '../environment.mjs'
+import { conversationRepository } from '../repositories/conversation'
+import { buildConfirmAppointment } from '../tools/confirm-appointment'
 
-export const onAppointment = new Composer();
+export const onAppointment = new Composer()
 
 const PROMPT = `
 You are a chatbot designed to help users book hair salon appointments for tomorrow.
@@ -137,18 +137,21 @@ You will follow these rules:
 4. Single-purpose chatbot: You only help users book appointments for tomorrow and do not answer unrelated questions, you need to use tools to ask options.
 
 If a user asks for information outside of these details, please respond with: "I'm sorry, but I cannot assist with that. For more information, please call us at (555) 456-7890 or email us at info@hairsalon.com."
-`;
+`
 
 onAppointment.callbackQuery(/slot-.+/, async (context) => {
-  const chatId = context.chatId as number;
-  const slot = context.callbackQuery.data.slice(5);
+  const chatId = context.chatId as number
+  const slot = context.callbackQuery.data.slice(5)
 
-  await conversationRepository.addMessage(chatId, "user", slot);
-  const messages = await conversationRepository.get(chatId);
+  await conversationRepository.addMessage(chatId, {
+    content: slot,
+    role: 'user',
+  })
+  const messages = await conversationRepository.get(chatId)
 
-  await context.api.sendChatAction(chatId, "typing");
+  await context.api.sendChatAction(chatId, 'typing')
 
-  const { text } = await generateText({
+  const { responseMessages, text } = await generateText({
     maxSteps: 2,
     messages,
     model: registry.languageModel(environment.MODEL),
@@ -156,13 +159,20 @@ onAppointment.callbackQuery(/slot-.+/, async (context) => {
     tools: {
       confirmAppointment: buildConfirmAppointment(context),
     },
-  });
+  })
 
-  if (text) {
-    await context.reply(text);
-    await conversationRepository.addMessage(chatId, "assistant", text);
+  // Store the assistant's response
+  for await (const message of responseMessages) {
+    await conversationRepository.addMessage(chatId, message)
   }
-});
+
+  if (!text) {
+    return
+  }
+
+  // Reply with the generated text
+  await context.reply(text)
+})
 ```
 
 And we need include this listener into the main bot file:

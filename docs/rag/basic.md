@@ -8,7 +8,7 @@ To effectively implement data augmentation in our chatbot, we will utilize the `
 
 For our hair salon chatbot, we can define a `PROMPT` variable that includes both the assistant's role and essential details about the salon. Here's how you can set it up just updating the system prompt:
 
-```ts
+```ts title="src/lib/handlers/on-message.ts (partial)"
 const PROMPT = `
 You are a chatbot designed to help users book hair salon appointments for the next day.
 Here is some basic information about the salon:
